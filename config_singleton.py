@@ -4,16 +4,16 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 
-# Carga variables de entorno (.env)
+# Carga variables del archivo .env (solo útil en local)
 load_dotenv()
 
-# Instancia global ÚNICA de SQLAlchemy
+# Instancia global única de SQLAlchemy
 db = SQLAlchemy()
 
 class Configuracion:
     """
     Configura la app Flask y registra la única instancia global de SQLAlchemy.
-    No registra Migrate aquí (hazlo en app.py).
+    Compatible con entorno local y Render.
     """
     _instance = None
 
@@ -25,15 +25,22 @@ class Configuracion:
 
     def _init_app(self):
         self.app = Flask(__name__)
-        self.app.secret_key = os.getenv("SECRET_KEY", "clave_local")
 
-        # URL desde .env, con fallback a tu Postgres local en 55432 (Docker)
+        # ==========================
+        # 1️⃣ SECRET_KEY
+        # ==========================
+        self.app.secret_key = os.getenv("SECRET_KEY", "clave_local_segura")
+
+        # ==========================
+        # 2️⃣ DATABASE_URL
+        # ==========================
+        # Usa la de Render si existe, o una local si estás en tu Mac o Docker
         db_url = os.getenv(
             "DATABASE_URL",
             "postgresql+psycopg://tienda:tienda@localhost:55432/tienda"
-        )
+        ).strip()
 
-        # Normaliza URLs antiguas de Postgres/MySQL
+        # Corrige prefijos antiguos de Postgres
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
         if db_url.startswith("postgresql+psycopg2://"):
@@ -41,8 +48,17 @@ class Configuracion:
         if db_url.startswith("mysql://"):
             db_url = db_url.replace("mysql://", "mysql+pymysql://", 1)
 
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = db_url
-        self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        # ==========================
+        # 3️⃣ Configuración SQLAlchemy
+        # ==========================
+        self.app.config.update(
+            SQLALCHEMY_DATABASE_URI=db_url,
+            SQLALCHEMY_TRACK_MODIFICATIONS=False,
+            SQLALCHEMY_ENGINE_OPTIONS={
+                "pool_pre_ping": True,    # Reconecta si Render duerme la instancia
+                "pool_recycle": 280,      # Evita timeout de conexiones inactivas
+            },
+        )
 
-        # Inicializa SQLAlchemy con ESTA app
+        # Inicializa SQLAlchemy con esta app
         db.init_app(self.app)
