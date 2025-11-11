@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Vestidos de Gala</title>
+  <link rel="icon" href="{{ url_for('static', filename='imagen.jpeg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <!-- Título principal -->
+  <h1 style="text-align:center;color:#d63384;font-size:36px;margin-top:16px;">
+    ¡Hola Bienvenidos al Mundo de Gala!
+  </h1>
+
+  <!-- Botón Iniciar Sesión -->
+  <a href="{{ url_for('main.login') }}" style="
+    position:absolute;top:20px;right:40px;background-color:#d63384;color:#fff;
+    padding:10px 20px;border-radius:5px;text-decoration:none;font-family:Arial;font-size:14px;">
+    Iniciar Sesión
+  </a>
+
+  <!-- Menú -->
+  <nav class="menu-horizontal" style="
+      margin:12px auto 24px;max-width:1200px;border:3px solid #8b188b;border-radius:20px;padding:18px;display:flex;gap:48px;justify-content:center;font-weight:700;font-size:24px;">
+    <a href="{{ url_for('main.home') }}">Inicio</a>
+    <a href="{{ url_for('main.blusones') }}">Blusones</a>
+    <a href="{{ url_for('main.vestidos') }}">Vestidos</a>
+    <a href="{{ url_for('main.enterizos') }}">Enterizos</a>
+    <a href="{{ url_for('main.jeans') }}">Jeans</a>
+    <a href="{{ url_for('main.vestidosgala') }}">Vestidos de Gala</a>
+    <a href="{{ url_for('main.blusas') }}">Blusas</a>
+  </nav>
+
+  <!-- Layout principal -->
+  <div style="display:flex;justify-content:center;align-items:flex-start;gap:24px;max-width:1400px;margin:0 auto 48px;">
+
+    <!-- Imagen izquierda -->
+    <div style="flex:0 0 340px;">
+      <img src="{{ url_for('static', filename='imagen51.jpeg') }}"
+           alt="Imagen izquierda"
+           style="width:100%;height:auto;object-fit:cover;border-radius:8px;">
+    </div>
+
+    <!-- Grid central (dinámico desde la base de datos) -->
+    <div style="flex:1 1 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+                gap:20px;max-width:900px;">
+
+      {% set items = VestidoGala.query.order_by(VestidoGala.id.desc()).limit(6).all() %}
+
+      {% if items and items|length > 0 %}
+        {% for it in items %}
+          {% set agotado = (it.stock is not none and it.stock|int <= 0) %}
+          <div style="text-align:center;padding:14px;border:1px solid #eee;border-radius:10px;
+                      box-shadow:0 2px 8px rgba(0,0,0,.04);background:#fff;">
+            <img src="{{ url_for('static', filename=it.imagen or 'imagen51.jpeg') }}"
+                 alt="{{ it.tipo or 'Vestido de Gala' }}"
+                 style="width:100%;max-width:160px;height:auto;object-fit:cover;border-radius:8px;">
+
+            <!-- Badge de stock -->
+            {% if it.stock is not none %}
+              <div style="margin-top:8px;">
+                {% if agotado %}
+                  <span style="background:#ffd6d6;color:#a30000;padding:4px 8px;border-radius:12px;font-weight:700;">
+                    Agotado
+                  </span>
+                {% else %}
+                  <span style="background:#e6ffed;color:#066f2b;padding:4px 8px;border-radius:12px;">
+                    Stock: <strong>{{ it.stock }}</strong>
+                  </span>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <!-- Información -->
+            <ul style="list-style:none;padding:0;margin-top:10px;font-family:Arial;">
+              <li><strong>Talla:</strong> {{ it.talla }}</li>
+              <li><strong>Color:</strong> {{ it.color }}</li>
+              <li><strong>Tipo:</strong> {{ it.tipo or 'Vestido de Gala' }}</li>
+            </ul>
+
+            <!-- Botón Comprar -->
+            <form action="{{ url_for('main.comprar') }}" method="get" style="margin-top:6px;">
+              <input type="hidden" name="talla" value="{{ it.talla }}">
+              <input type="hidden" name="color" value="{{ it.color }}">
+              <input type="hidden" name="tipo"  value="VestidoGala">
+              <button type="submit"
+                      {% if agotado %}disabled aria-disabled="true" title="Sin stock"{% endif %}
+                      style="background-color:{% if agotado %}#aaa{% else %}#d63384{% endif %};
+                             color:#fff;padding:6px 16px;border:none;border-radius:5px;
+                             font-size:14px;cursor:{% if agotado %}not-allowed{% else %}pointer{% endif %};">
+                {% if agotado %}Sin stock{% else %}Comprar{% endif %}
+              </button>
+            </form>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="grid-column:1/-1;text-align:center;">
+          <p>No hay vestidos de gala registrados. Puedes cargar datos con <code>/seed?key=dev</code>.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Imagen derecha -->
+    <div style="flex:0 0 320px;">
+      <img src="{{ url_for('static', filename='imagen52.jpeg') }}"
+           alt="Imagen derecha"
+           style="width:120%;max-width:420px;height:auto;object-fit:cover;border-radius:8px;">
+    </div>
+
+  </div>
+</body>
+</html>

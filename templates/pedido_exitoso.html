@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedido Exitoso</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos2.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>¡Pedido registrado exitosamente! 🎉</h2>
+
+        <p>
+            Gracias, <strong>{{ nombre }}</strong>. Tu pedido de 
+            <strong>{{ tipo }}</strong> (talla <strong>{{ talla }}</strong>, color <strong>{{ color }}</strong>) 
+            ha sido registrado correctamente.<br>
+            El total de tu compra es: <strong>${{ "%.2f"|format(total) }}</strong>
+        </p>
+
+        <a class="volver" href="{{ url_for('main.home') }}">← Volver al inicio</a>
+    </div>
+</body>
+</html>

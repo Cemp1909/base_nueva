@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario de Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos2.css') }}">
+    <script>
+        function calcularTotal() {
+            const cantidad = parseFloat(document.getElementById("cantidad").value) || 0;
+            const precioUnitario = parseFloat(document.getElementById("precio_unitario").value) || 0;
+            const total = cantidad * precioUnitario;
+            document.getElementById("precio_total").value = total.toFixed(2);
+        }
+
+        // 👉 Redirige a la pasarela de pago
+        function irAPasarela() {
+            const cantidad = parseFloat(document.getElementById("cantidad").value) || 0;
+            const precioUnitario = parseFloat(document.getElementById("precio_unitario").value) || 0;
+            const total = (cantidad * precioUnitario).toFixed(2);
+
+            if (total <= 0) {
+                alert("Primero ingresa una cantidad válida.");
+                return;
+            }
+
+            // Redirige al formulario de pago simulado
+            window.location.href = "{{ url_for('main.pay') }}?amount=" + total;
+        }
+    </script>
+</head>
+<body>
+    <h2>Registrar Compra</h2>
+
+    <!-- ✅ Cambiado el action: antes era main.enviar_pedido -->
+    <form method="POST" action="{{ url_for('main.formulario_compra') }}">
+        <label>Nombre del Cliente:</label><br>
+        <input type="text" name="nombre" required><br><br>
+
+        <label>Dirección:</label><br>
+        <input type="text" name="direccion" required><br><br>
+
+        <label>Teléfono:</label><br>
+        <input type="text" name="telefono" required><br><br>
+
+        <label>Producto:</label><br>
+        <input type="text" name="tipo" value="{{ tipo }}" readonly><br><br>
+
+        <label>Talla:</label><br>
+        <input type="text" name="talla" value="{{ talla }}" readonly><br><br>
+
+        <label>Color:</label><br>
+        <input type="text" name="color" value="{{ color }}" readonly><br><br>
+
+        <label>Cantidad:</label><br>
+        <input type="number" id="cantidad" name="cantidad" min="1" required oninput="calcularTotal()"><br><br>
+
+        <label>Precio Unitario:</label><br>
+        <input type="number" id="precio_unitario" name="precio_unitario" step="0.01" min="0" value="{{ precio_unitario }}" readonly><br><br>
+
+        <label>Precio Total:</label><br>
+        <input type="number" id="precio_total" name="precio_total" step="0.01" readonly><br><br>
+
+        <!-- 🔹 Botones -->
+        <button type="submit">Registrar Compra</button>
+        <button type="button" onclick="irAPasarela()" style="margin-left:10px; background-color:#d63384; color:white; border:none; padding:6px 12px; border-radius:5px;">
+            Pagar (Simulado)
+        </button>
+    </form>
+
+    <!-- ✅ Cambiado el link: antes era main.inicio -->
+    <br><a href="{{ url_for('main.home') }}">Volver al inicio</a>
+</body>
+</html>
