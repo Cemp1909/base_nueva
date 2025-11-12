@@ -7,7 +7,8 @@ services:
     startCommand: gunicorn app:app --bind 0.0.0.0:10000
     envVars:
       - key: DATABASE_URL
-        fromDatabase: db_tienda
+        fromDatabase: 
+         name : db_tienda
       - key: INFLUX_URL
         # 👉 después del primer deploy, reemplaza esto con la URL pública de tu servicio "influxdb"
         value: "https://<URL-publica-de-influxdb>"
