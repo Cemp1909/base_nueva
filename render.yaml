@@ -1,0 +1,77 @@
+services:
+  - type: web
+    name: base_nueva
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: db_tienda
+      - key: INFLUX_URL
+        value: http://influxdb:8086
+      - key: INFLUX_ORG
+        value: MiLab
+      - key: INFLUX_BUCKET
+        value: Sensores
+      - key: INFLUX_TOKEN
+        sync: false        # (lo pones luego en la UI)
+      - key: MQTT_BROKER
+        value: mosquitto
+      - key: MQTT_PORT
+        value: 1883
+
+  - type: private_service
+    name: influxdb
+    dockerImage: influxdb:2.7
+    ports:
+      - port: 8086
+        protocol: tcp
+    disk:
+      name: influx-data
+      mountPath: /var/lib/influxdb2
+      sizeGB: 5
+    envVars:
+      # Auto-setup de InfluxDB 2.x
+      - key: DOCKER_INFLUXDB_INIT_MODE
+        value: setup
+      - key: DOCKER_INFLUXDB_INIT_USERNAME
+        value: admin
+      - key: DOCKER_INFLUXDB_INIT_PASSWORD
+        sync: false
+      - key: DOCKER_INFLUXDB_INIT_ORG
+        value: MiLab
+      - key: DOCKER_INFLUXDB_INIT_BUCKET
+        value: Sensores
+      - key: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+        sync: false
+
+  - type: web
+    name: grafana
+    dockerImage: grafana/grafana:10
+    ports:
+      - port: 3000
+        protocol: tcp
+    envVars:
+      - key: GF_SECURITY_ADMIN_USER
+        value: admin
+      - key: GF_SECURITY_ADMIN_PASSWORD
+        sync: false
+        
+  - type: private_service
+    name: mosquitto
+    dockerImage: eclipse-mosquitto:2
+    ports:
+      - port: 1883
+        protocol: tcp
+    mounts:
+      - mountPath: /mosquitto/config
+        repoPath: mosquitto/config
+    disk:
+      name: mosq-data
+      mountPath: /mosquitto/data
+      sizeGB: 1
+
+
+databases:
+  - name: db_tienda
+    databaseName: tienda
