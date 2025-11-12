@@ -1,37 +1,39 @@
 services:
   - type: web
     name: base_nueva
+    plan: free
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --bind 0.0.0.0:10000
     envVars:
       - key: DATABASE_URL
         fromDatabase: db_tienda
       - key: INFLUX_URL
-        value: http://influxdb:8086
+        # 👉 después del primer deploy, reemplaza esto con la URL pública de tu servicio "influxdb"
+        value: "https://<URL-publica-de-influxdb>"
       - key: INFLUX_ORG
-        value: MiLab
+        value: "MiLab"
       - key: INFLUX_BUCKET
-        value: Sensores
+        value: "Sensores"
       - key: INFLUX_TOKEN
-        sync: false        # (lo pones luego en la UI)
+        sync: false
+      # 👉 Broker MQTT externo (p.ej. HiveMQ público). Cambia si usas otro.
       - key: MQTT_BROKER
-        value: mosquitto
+        value: "broker.hivemq.com"
       - key: MQTT_PORT
-        value: 1883
+        value: "1883"
 
-  - type: private_service
+  # InfluxDB como servicio web con runtime Docker
+  - type: web
     name: influxdb
-    dockerImage: influxdb:2.7
-    ports:
-      - port: 8086
-        protocol: tcp
+    plan: free
+    env: docker
+    dockerfilePath: ./render/influxdb.Dockerfile
     disk:
       name: influx-data
       mountPath: /var/lib/influxdb2
       sizeGB: 5
     envVars:
-      # Auto-setup de InfluxDB 2.x
       - key: DOCKER_INFLUXDB_INIT_MODE
         value: setup
       - key: DOCKER_INFLUXDB_INIT_USERNAME
@@ -45,32 +47,17 @@ services:
       - key: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
         sync: false
 
+  # Grafana como servicio web con runtime Docker
   - type: web
     name: grafana
-    dockerImage: grafana/grafana:10
-    ports:
-      - port: 3000
-        protocol: tcp
+    plan: free
+    env: docker
+    dockerfilePath: ./render/grafana.Dockerfile
     envVars:
       - key: GF_SECURITY_ADMIN_USER
         value: admin
       - key: GF_SECURITY_ADMIN_PASSWORD
         sync: false
-        
-  - type: private_service
-    name: mosquitto
-    dockerImage: eclipse-mosquitto:2
-    ports:
-      - port: 1883
-        protocol: tcp
-    mounts:
-      - mountPath: /mosquitto/config
-        repoPath: mosquitto/config
-    disk:
-      name: mosq-data
-      mountPath: /mosquitto/data
-      sizeGB: 1
-
 
 databases:
   - name: db_tienda
